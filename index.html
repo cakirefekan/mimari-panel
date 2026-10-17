@@ -3,7 +3,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://docs.google.com; form-action https://docs.google.com; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Render Karşılaştırma</title>
-<style>
+<style>[hidden]{display:none!important}
 :root{--bg:#f6f5f2;--fg:#1d1d1b;--mut:#6b6a66;--line:#d9d6cf;--acc:#2f5d50;--btn:#fff}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#161615;--fg:#ecebe7;--mut:#a3a19b;--line:#3a3936;--acc:#7fb8a6;--btn:#222220}}
 :root[data-theme=dark]{--bg:#161615;--fg:#ecebe7;--mut:#a3a19b;--line:#3a3936;--acc:#7fb8a6;--btn:#222220}
@@ -24,6 +24,12 @@ textarea{min-height:56px}label{display:block;margin:8px 0}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:8px}progress{flex:1;max-width:260px}
 .note{font-size:13px;border:1px solid var(--line);border-radius:6px;padding:8px 10px}
 .credits{font-size:12px;color:var(--mut);margin-top:24px;border-top:1px solid var(--line);padding-top:8px}.credits p{margin:3px 0}
+.pair img{cursor:zoom-in}
+.zhint{font-size:13px;color:var(--mut);margin:2px 0 0}
+#zoom{position:fixed;inset:0;background:#000;z-index:10;overflow:auto;touch-action:pan-x pan-y;overscroll-behavior:contain}
+#zoom img{display:block;max-width:none;margin:auto;image-rendering:auto;user-select:none;-webkit-user-drag:none}
+#zbar{position:fixed;top:8px;right:8px;z-index:11;display:flex;gap:6px}#zbar button{background:rgba(0,0,0,.65);color:#fff;border-color:#555;padding:8px 12px}
+#zlab{position:fixed;top:8px;left:8px;z-index:11;background:rgba(0,0,0,.65);color:#fff;font-weight:700;padding:6px 12px;border-radius:6px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 @media (min-width:760px){.pair{grid-template-columns:1fr 1fr}.opts{display:flex}.opts button{min-width:90px}button.main{width:auto}}
 </style></head><body><main>
@@ -43,6 +49,7 @@ textarea{min-height:56px}label{display:block;margin:8px 0}
 <section id="run" hidden>
 <div class="bar"><span id="cnt"></span><progress id="prog" value="0" max="1"></progress></div>
 <div class="pair"><figure><img id="imL" alt="1"><figcaption>1</figcaption></figure><figure><img id="imR" alt="2"><figcaption>2</figcaption></figure></div>
+<p class="zhint" data-i="zhint"></p>
 <div class="q"><b data-i="q_real"></b><div class="opts" data-q="real"><button data-v="L">1</button><button data-v="R">2</button></div></div>
 <div class="q"><b data-i="q_arch"></b><div class="opts" data-q="arch"><button data-v="L">1</button><button data-v="R">2</button></div></div>
 <div class="q"><b data-i="q_why"></b><textarea id="why" maxlength="300"></textarea></div>
@@ -51,11 +58,12 @@ textarea{min-height:56px}label{display:block;margin:8px 0}
 <section id="done" hidden><h1 data-i="thanks"></h1><p id="status"></p>
 <div id="fallback" hidden><p data-i="fb"></p><textarea id="code" readonly rows="6"></textarea>
 <p><button id="copy" data-i="copy"></button> <button id="retry" data-i="retry"></button></p></div></section>
+<div id="zoom" hidden><img id="zimg" alt=""></div><div id="zbar" hidden><button id="z11">1:1</button><button id="zfit" data-i="zfit"></button><button id="zx" aria-label="close">✕</button></div><div id="zlab" hidden></div>
 <div class="credits"><p data-i="cred_h"></p><div id="cred"></div></div>
 </main>
 <script>
 "use strict";
-const PAIRS=[{"id":"p01","a":"i020","b":"i010"},{"id":"p02","a":"i020","b":"i016"},{"id":"p03","a":"i018","b":"i057"},{"id":"p04","a":"i018","b":"i024"},{"id":"p05","a":"i033","b":"i031"},{"id":"p06","a":"i033","b":"i050"},{"id":"p07","a":"i048","b":"i051"},{"id":"p08","a":"i048","b":"i052"},{"id":"p09","a":"i028","b":"i017"},{"id":"p10","a":"i028","b":"i001"},{"id":"p11","a":"i007","b":"i011"},{"id":"p12","a":"i007","b":"i042"},{"id":"p13","a":"i056","b":"i037"},{"id":"p14","a":"i046","b":"i030"},{"id":"p15","a":"i046","b":"i025"},{"id":"p16","a":"i046","b":"i021"},{"id":"p17","a":"i046","b":"i032"},{"id":"p18","a":"i006","b":"i014"},{"id":"p19","a":"i053","b":"i029"},{"id":"p20","a":"i053","b":"i003"},{"id":"p21","a":"i053","b":"i015"},{"id":"p22","a":"i053","b":"i045"},{"id":"p23","a":"i041","b":"i027"},{"id":"p24","a":"i023","b":"i013"},{"id":"p25","a":"i023","b":"i058"},{"id":"p26","a":"i023","b":"i008"},{"id":"p27","a":"i023","b":"i054"},{"id":"p31","a":"i034","b":"i000"},{"id":"p32","a":"i059","b":"i044"},{"id":"p33","a":"i059","b":"i026"},{"id":"p34","a":"i055","b":"i053"},{"id":"p35","a":"i009","b":"i023"},{"id":"p37","a":"i038","b":"i043"},{"id":"p38","a":"i022","b":"i004"},{"id":"p39","a":"i039","b":"i002"},{"id":"p40","a":"i049","b":"i019"},{"id":"p41","a":"i040","b":"i012"},{"id":"p42","a":"i036","b":"i005"},{"id":"p43","a":"i035","b":"i047"},{"id":"p44","a":"i018","b":"i053"},{"id":"p45","a":"i007","b":"i046"},{"id":"p46","a":"i059","b":"i023"}], CREDITS={"tr": ["“Italian Flat” — Flavio Della Tommasa (malapixel.com), CC BY, blender.org demo dosyalarından; bu çalışma için USD’ye dönüştürülüp değiştirildi.", "“Amazon Lumberyard Bistro, Open Research Content Archive (ORCA)”, Amazon Lumberyard, 2017, http://developer.nvidia.com/orca/amazon-lumberyard-bistro. CC BY 4.0, bu çalışma için dönüştürüldü.", "Mutfak: bu çalışma için hazırlanmış sahne (kendi parametrik modellerimiz; Poly Haven ve ambientCG CC0 dokuları; gökyüzü Poly Haven “Rolling Hills”, CC0)."], "en": ["“Italian Flat” by Flavio Della Tommasa (malapixel.com), CC BY, via blender.org demo files. Converted to USD and modified for this study.", "“Amazon Lumberyard Bistro, Open Research Content Archive (ORCA)”, Amazon Lumberyard, 2017, http://developer.nvidia.com/orca/amazon-lumberyard-bistro. CC BY 4.0, converted for this study.", "Kitchen: scene made for this study (our parametric models; CC0 textures from Poly Haven and ambientCG; sky: Poly Haven “Rolling Hills”, CC0)."]}, KIT="public-v1";
+const PAIRS=[{"id":"p01","a":"i011","b":"i032"},{"id":"p02","a":"i011","b":"i002"},{"id":"p03","a":"i019","b":"i020"},{"id":"p04","a":"i019","b":"i004"},{"id":"p05","a":"i016","b":"i015"},{"id":"p06","a":"i016","b":"i025"},{"id":"p07","a":"i033","b":"i026"},{"id":"p08","a":"i033","b":"i024"},{"id":"p09","a":"i028","b":"i017"},{"id":"p10","a":"i028","b":"i001"},{"id":"p11","a":"i003","b":"i005"},{"id":"p12","a":"i003","b":"i021"},{"id":"p13","a":"i018","b":"i010"},{"id":"p14","a":"i012","b":"i030"},{"id":"p15","a":"i012","b":"i023"},{"id":"p16","a":"i012","b":"i022"},{"id":"p17","a":"i012","b":"i027"},{"id":"p31","a":"i014","b":"i031"},{"id":"p32","a":"i007","b":"i029"},{"id":"p33","a":"i007","b":"i000"},{"id":"p40","a":"i006","b":"i013"},{"id":"p42","a":"i008","b":"i009"},{"id":"p45","a":"i003","b":"i012"}], CREDITS={"tr": ["“Italian Flat” — Flavio Della Tommasa (malapixel.com), CC BY, blender.org demo dosyalarından; bu çalışma için USD’ye dönüştürülüp değiştirildi.", "“Amazon Lumberyard Bistro, Open Research Content Archive (ORCA)”, Amazon Lumberyard, 2017, http://developer.nvidia.com/orca/amazon-lumberyard-bistro. CC BY 4.0, bu çalışma için dönüştürüldü.", "Mutfak: bu çalışma için hazırlanmış sahne (kendi parametrik modellerimiz; Poly Haven ve ambientCG CC0 dokuları; gökyüzü Poly Haven “Rolling Hills”, CC0)."], "en": ["“Italian Flat” by Flavio Della Tommasa (malapixel.com), CC BY, via blender.org demo files. Converted to USD and modified for this study.", "“Amazon Lumberyard Bistro, Open Research Content Archive (ORCA)”, Amazon Lumberyard, 2017, http://developer.nvidia.com/orca/amazon-lumberyard-bistro. CC BY 4.0, converted for this study.", "Kitchen: scene made for this study (our parametric models; CC0 textures from Poly Haven and ambientCG; sky: Poly Haven “Rolling Hills”, CC0)."]}, KIT="public-v2";
 const FORM="https://docs.google.com/forms/d/e/1FAIpQLSfZBasLbTuwL0jq9xy8COiKfeQhIAoOTXUTb4cfw0z_mgZGgA/formResponse", FIELD="entry.12284930";
 const CHECKPOINTS=[15,30], NREP=2, MAXB=40000;
 const T={
@@ -65,13 +73,13 @@ intro2:"Klavyede 1 ve 2 tuşları sıradaki soruyu yanıtlar, Enter sonraki çif
 bg_h:"Sizi tanıyalım (isteğe bağlı)",prof:"Mesleğiniz",exp:"Deneyim (yıl)",none:"Belirtmek istemiyorum",
 p_arch:"Mimar",p_int:"İç mimar",p_photo:"Mimari fotoğrafçı",p_viz:"3D görselleştirme",p_student:"Tasarım öğrencisi",p_other:"Diğer",
 kvkk_h:"Gizlilik (KVKK) bilgilendirmesi",
-kvkk:"Yanıtlarınız anonimdir: adınızı, e-posta adresinizi ya da IP adresinizi istemiyor ve saklamıyoruz. Yalnızca yanıtlarınız, isteğe bağlı meslek/deneyim bilginiz, rastgele bir oturum kimliği ve süreler kaydedilir. Veriler yalnızca render kalitesini geliştirmek için kullanılır. Katılım gönüllüdür; istediğiniz an bırakabilirsiniz. Yanıtlar Google Forms aracılığıyla iletilir (15. ve 30. çiftten sonra ve sonda); Google bu iletim sırasında kendi gizlilik politikasına göre teknik bilgileri (ör. IP) işleyebilir, ancak biz bunları almıyoruz.",
+kvkk:"Yanıtlarınız anonimdir: adınızı, e-posta adresinizi ya da IP adresinizi istemiyor ve saklamıyoruz. Yalnızca yanıtlarınız, isteğe bağlı meslek/deneyim bilginiz, rastgele bir oturum kimliği ve süreler kaydedilir. Veriler yalnızca render kalitesini geliştirmek için kullanılır. Katılım gönüllüdür; istediğiniz an bırakabilirsiniz. Yanıtlar Google Forms aracılığıyla iletilir (15. ve 30. çiftten sonra ve sonda). Google bu iletim sırasında kendi gizlilik politikasına göre teknik bilgileri (ör. IP) işleyebilir, ancak biz bunları almıyoruz.",
 start:"Başla",pair:"Çift {k} / {n}",
 q_real:"Hangisi gerçek bir fotoğrafa daha çok benziyor?",q_arch:"Hangisi daha iyi bir mimari fotoğraf?",
 q_why:"Ne ele veriyor? (isteğe bağlı)",why_ph:"ör. fazla temiz, ışık yanlış duruyor, çizgiler eğik",next:"Sonraki çift",
 thanks:"Teşekkürler!",sent:"Yanıtlarınız gönderildi. Katkınız için çok teşekkür ederiz; bu sayfayı kapatabilirsiniz.",sending:"Gönderiliyor…",
 fb:"Bağlantı yok gibi görünüyor. Aşağıdaki kodu kopyalayıp size bu bağlantıyı gönderen kişiye iletebilir ya da bağlantı gelince yeniden deneyebilirsiniz.",
-copy:"Kodu kopyala",copied:"Kopyalandı",retry:"Yeniden gönder",cred_h:"Sahne kaynakları ve lisanslar:"},
+zhint:"Ayrıntı için görüntüye dokunun: tam ekran, iki parmakla yakınlaştırma, 1:1 piksel.",zfit:"Sığdır",copy:"Kodu kopyala",copied:"Kopyalandı",retry:"Yeniden gönder",cred_h:"Sahne kaynakları ve lisanslar:"},
 en:{title:"Which image is the better photograph?",
 intro1:"You will see {n} pairs of images of buildings and interiors. For each pair, answer two questions. There are no right answers; go with your first impression. It takes about 15–25 minutes.",
 intro2:"Keys: 1 and 2 answer the current question, Enter moves to the next pair.",
@@ -84,7 +92,7 @@ q_real:"Which looks more like a real photograph?",q_arch:"Which is the better ar
 q_why:"What gives it away? (optional)",why_ph:"e.g. too clean, light looks wrong, lines tilt",next:"Next pair",
 thanks:"Thank you!",sent:"Your answers have been sent. Thanks a lot for your help; you can close this page.",sending:"Sending…",
 fb:"You seem to be offline. Copy the code below and send it to the person who shared this link, or retry when you are back online.",
-copy:"Copy code",copied:"Copied",retry:"Send again",cred_h:"Scene sources and licences:"}};
+zhint:"Tap an image for full screen: pinch to zoom, 1:1 native pixels.",zfit:"Fit",copy:"Copy code",copied:"Copied",retry:"Send again",cred_h:"Scene sources and licences:"}};
 let LANG="tr";
 const $=id=>document.getElementById(id);
 const rnd=n=>{const b=new Uint8Array(n);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,"0")).join("")};
@@ -134,9 +142,29 @@ function next(){if(!(ans.real&&ans.arch))return;const t=seq[k],p=PAIRS[t.pi],[l,
  if(k>=N)finish();else show();}
 $("next").onclick=next;
 $("start").onclick=()=>{S.bg={prof:$("prof").value,exp:$("exp").value};$("intro").hidden=true;$("run").hidden=false;show();};
-document.addEventListener("keydown",e=>{if($("run").hidden||e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
+document.addEventListener("keydown",e=>{if($("run").hidden||!$("zoom").hidden||e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
  if(e.key==="1"||e.key==="2"){pick(!ans.real?"real":"arch",e.key==="1"?"L":"R")}else if(e.key==="Enter"){next()}});
 $("copy").onclick=async()=>{$("code").select();try{await navigator.clipboard.writeText($("code").value)}catch(e){document.execCommand&&document.execCommand("copy")}$("copy").textContent=tr("copied")};
 $("retry").onclick=async()=>{const ok=await submit("final");$("status").textContent=ok?tr("sent"):"";$("fallback").hidden=ok};
+
+// tap-to-zoom: full-screen viewer, pinch / wheel zoom from "fit" up to 4x native pixels, 1:1 = one image px per device px
+const Z={s:1,fit:1,nat:1};
+function zset(scale,cx,cy){const z=$("zoom"),im=$("zimg"),old=Z.s;Z.s=Math.min(Math.max(scale,Z.fit),Z.nat*4);
+ const W=im.naturalWidth*Z.s;im.style.width=W+"px";
+ im.style.marginTop=Math.max(0,(innerHeight-im.naturalHeight*Z.s)/2)+"px";
+ if(cx!==undefined){const r=Z.s/old;z.scrollLeft=(z.scrollLeft+cx)*r-cx;z.scrollTop=(z.scrollTop+cy)*r-cy}}
+function zopen(img,label){const im=$("zimg");im.onload=()=>{Z.fit=Math.min(innerWidth/im.naturalWidth,innerHeight/im.naturalHeight);Z.nat=1/(devicePixelRatio||1);Z.s=Z.fit;zset(Z.fit)};
+ im.src=img.src;$("zlab").textContent=label;["zoom","zbar","zlab"].forEach(i=>$(i).hidden=false);document.body.style.overflow="hidden";if(im.complete&&im.naturalWidth)im.onload();}
+function zclose(){["zoom","zbar","zlab"].forEach(i=>$(i).hidden=true);document.body.style.overflow="";$("zimg").removeAttribute("src")}
+$("imL").onclick=()=>zopen($("imL"),"1");$("imR").onclick=()=>zopen($("imR"),"2");
+$("zx").onclick=zclose;$("zfit").onclick=()=>zset(Z.fit);$("z11").onclick=()=>zset(Z.nat,innerWidth/2,innerHeight/2);
+$("zoom").addEventListener("wheel",e=>{if(!e.ctrlKey&&!e.metaKey)return;e.preventDefault();zset(Z.s*Math.exp(-e.deltaY/300),e.clientX,e.clientY)},{passive:false});
+let pin=null;const P=new Map();
+$("zoom").addEventListener("pointerdown",e=>{P.set(e.pointerId,e);if(P.size===2){const[a,b]=[...P.values()];pin={d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),s:Z.s}}});
+$("zoom").addEventListener("pointermove",e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,e);if(pin&&P.size===2){const[a,b]=[...P.values()];
+ zset(pin.s*Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)/pin.d,(a.clientX+b.clientX)/2,(a.clientY+b.clientY)/2);pin.s=Z.s;pin.d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)}});
+["pointerup","pointercancel","pointerleave"].forEach(t=>$("zoom").addEventListener(t,e=>{P.delete(e.pointerId);if(P.size<2)pin=null}));
+let lastTap=0;$("zimg").addEventListener("click",e=>{const n=Date.now();if(n-lastTap<350){zset(Z.s>Z.fit*1.05?Z.fit:Z.nat,e.clientX,e.clientY)}lastTap=n});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("zoom").hidden)zclose()},true);
 applyLang(LANG);
 </script></body></html>
