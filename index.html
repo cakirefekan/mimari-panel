@@ -30,6 +30,7 @@ textarea{min-height:56px}label{display:block;margin:8px 0}
 #zoom img{display:block;max-width:none;margin:auto;image-rendering:auto;user-select:none;-webkit-user-drag:none}
 #zbar{position:fixed;top:8px;right:8px;z-index:11;display:flex;gap:6px}#zbar button{background:rgba(0,0,0,.65);color:#fff;border-color:#555;padding:8px 12px}
 #zlab{position:fixed;top:8px;left:8px;z-index:11;background:rgba(0,0,0,.65);color:#fff;font-weight:700;padding:6px 12px;border-radius:6px}
+.opts{flex-wrap:wrap}.opts .tie{grid-column:1/-1;flex-basis:100%}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 @media (min-width:760px){.pair{grid-template-columns:1fr 1fr}.opts{display:flex}.opts button{min-width:90px}button.main{width:auto}}
 </style></head><body><main>
@@ -50,8 +51,8 @@ textarea{min-height:56px}label{display:block;margin:8px 0}
 <div class="bar"><span id="cnt"></span><progress id="prog" value="0" max="1"></progress></div>
 <div class="pair"><figure><img id="imL" alt="1"><figcaption>1</figcaption></figure><figure><img id="imR" alt="2"><figcaption>2</figcaption></figure></div>
 <p class="zhint" data-i="zhint"></p>
-<div class="q"><b data-i="q_real"></b><div class="opts" data-q="real"><button data-v="L">1</button><button data-v="R">2</button></div></div>
-<div class="q"><b data-i="q_arch"></b><div class="opts" data-q="arch"><button data-v="L">1</button><button data-v="R">2</button></div></div>
+<div class="q"><b data-i="q_real"></b><div class="opts" data-q="real"><button data-v="L">1</button><button data-v="R">2</button><button data-v="T" class="tie" data-i="tie"></button></div></div>
+<div class="q"><b data-i="q_arch"></b><div class="opts" data-q="arch"><button data-v="L">1</button><button data-v="R">2</button><button data-v="T" class="tie" data-i="tie"></button></div></div>
 <div class="q"><b data-i="q_why"></b><textarea id="why" maxlength="300"></textarea></div>
 <div class="bar"><span></span><button id="next" class="main" disabled data-i="next"></button></div>
 </section>
@@ -69,7 +70,7 @@ const CHECKPOINTS=[15,30], NREP=2, MAXB=40000;
 const T={
 tr:{title:"Hangi görüntü daha iyi bir fotoğraf?",
 intro1:"Bina ve iç mekân görüntülerinden oluşan {n} çift göreceksiniz. Her çift için iki soruyu yanıtlayın. Doğru ya da yanlış yanıt yok; ilk izleniminize güvenin. Yaklaşık 15–25 dakika sürer.",
-intro2:"Klavyede 1 ve 2 tuşları sıradaki soruyu yanıtlar, Enter sonraki çifte geçer.",
+intro2:"Klavyede 1, 2 ve 3 (fark yok) tuşları sıradaki soruyu yanıtlar, Enter sonraki çifte geçer.",
 bg_h:"Sizi tanıyalım (isteğe bağlı)",prof:"Mesleğiniz",exp:"Deneyim (yıl)",none:"Belirtmek istemiyorum",
 p_arch:"Mimar",p_int:"İç mimar",p_photo:"Mimari fotoğrafçı",p_viz:"3D görselleştirme",p_student:"Tasarım öğrencisi",p_other:"Diğer",
 kvkk_h:"Gizlilik (KVKK) bilgilendirmesi",
@@ -79,10 +80,10 @@ q_real:"Hangisi gerçek bir fotoğrafa daha çok benziyor?",q_arch:"Hangisi daha
 q_why:"Ne ele veriyor? (isteğe bağlı)",why_ph:"ör. fazla temiz, ışık yanlış duruyor, çizgiler eğik",next:"Sonraki çift",
 thanks:"Teşekkürler!",sent:"Yanıtlarınız gönderildi. Katkınız için çok teşekkür ederiz; bu sayfayı kapatabilirsiniz.",sending:"Gönderiliyor…",
 fb:"Bağlantı yok gibi görünüyor. Aşağıdaki kodu kopyalayıp size bu bağlantıyı gönderen kişiye iletebilir ya da bağlantı gelince yeniden deneyebilirsiniz.",
-zhint:"Ayrıntı için görüntüye dokunun: tam ekran, iki parmakla yakınlaştırma, 1:1 piksel.",zfit:"Sığdır",copy:"Kodu kopyala",copied:"Kopyalandı",retry:"Yeniden gönder",cred_h:"Sahne kaynakları ve lisanslar:"},
+zhint:"Ayrıntı için görüntüye dokunun: tam ekran, iki parmakla yakınlaştırma, 1:1 piksel.",zfit:"Sığdır",tie:"Fark göremiyorum",copy:"Kodu kopyala",copied:"Kopyalandı",retry:"Yeniden gönder",cred_h:"Sahne kaynakları ve lisanslar:"},
 en:{title:"Which image is the better photograph?",
 intro1:"You will see {n} pairs of images of buildings and interiors. For each pair, answer two questions. There are no right answers; go with your first impression. It takes about 15–25 minutes.",
-intro2:"Keys: 1 and 2 answer the current question, Enter moves to the next pair.",
+intro2:"Keys: 1, 2 and 3 (no difference) answer the current question, Enter moves to the next pair.",
 bg_h:"About you (optional)",prof:"Profession",exp:"Experience (years)",none:"Prefer not to say",
 p_arch:"Architect",p_int:"Interior architect",p_photo:"Architectural photographer",p_viz:"3D visualisation",p_student:"Design student",p_other:"Other",
 kvkk_h:"Privacy notice (KVKK)",
@@ -92,7 +93,7 @@ q_real:"Which looks more like a real photograph?",q_arch:"Which is the better ar
 q_why:"What gives it away? (optional)",why_ph:"e.g. too clean, light looks wrong, lines tilt",next:"Next pair",
 thanks:"Thank you!",sent:"Your answers have been sent. Thanks a lot for your help; you can close this page.",sending:"Sending…",
 fb:"You seem to be offline. Copy the code below and send it to the person who shared this link, or retry when you are back online.",
-zhint:"Tap an image for full screen: pinch to zoom, 1:1 native pixels.",zfit:"Fit",copy:"Copy code",copied:"Copied",retry:"Send again",cred_h:"Scene sources and licences:"}};
+zhint:"Tap an image for full screen: pinch to zoom, 1:1 native pixels.",zfit:"Fit",tie:"I can't tell the difference",copy:"Copy code",copied:"Copied",retry:"Send again",cred_h:"Scene sources and licences:"}};
 let LANG="tr";
 const $=id=>document.getElementById(id);
 const rnd=n=>{const b=new Uint8Array(n);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,"0")).join("")};
@@ -136,14 +137,14 @@ async function submit(stage){const body=new URLSearchParams();const s=payload(st
 async function finish(){$("run").hidden=true;$("done").hidden=false;$("status").textContent=tr("sending");
  S.end=new Date().toISOString();const ok=await submit("final");
  $("status").textContent=ok?tr("sent"):"";$("fallback").hidden=ok;}
-function next(){if(!(ans.real&&ans.arch))return;const t=seq[k],p=PAIRS[t.pi],[l,r]=ids(t),w=v=>v==="L"?l:r;
+function next(){if(!(ans.real&&ans.arch))return;const t=seq[k],p=PAIRS[t.pi],[l,r]=ids(t),w=v=>v==="T"?"tie":v==="L"?l:r;
  S.a.push({p:p.id,l,r,rw:w(ans.real),aw:w(ans.arch),ms:Math.round(performance.now()-t0),w:$("why").value.trim().slice(0,300),k,rep:t.rep,lg:LANG});
  k++;if(CHECKPOINTS.includes(k)&&k<N)submit("p"+k);
  if(k>=N)finish();else show();}
 $("next").onclick=next;
 $("start").onclick=()=>{S.bg={prof:$("prof").value,exp:$("exp").value};$("intro").hidden=true;$("run").hidden=false;show();};
 document.addEventListener("keydown",e=>{if($("run").hidden||!$("zoom").hidden||e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
- if(e.key==="1"||e.key==="2"){pick(!ans.real?"real":"arch",e.key==="1"?"L":"R")}else if(e.key==="Enter"){next()}});
+ if(e.key==="1"||e.key==="2"||e.key==="3"){pick(!ans.real?"real":"arch",{"1":"L","2":"R","3":"T"}[e.key])}else if(e.key==="Enter"){next()}});
 $("copy").onclick=async()=>{$("code").select();try{await navigator.clipboard.writeText($("code").value)}catch(e){document.execCommand&&document.execCommand("copy")}$("copy").textContent=tr("copied")};
 $("retry").onclick=async()=>{const ok=await submit("final");$("status").textContent=ok?tr("sent"):"";$("fallback").hidden=ok};
 
